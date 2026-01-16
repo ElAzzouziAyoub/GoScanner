@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"flag"
 )
 
 var wg sync.WaitGroup
@@ -11,11 +12,29 @@ var wg sync.WaitGroup
 
 func main() {
 
-	for i := 0; i <= 1000; i++ {
+	target := flag.String("target", "", "Target host")
+	StartPort := flag.Int("sp", 80, "Starting Port to scan")
+	EndPort := flag.Int("ep", 80, "Ending Port to scan")
+
+	flag.Parse()
+
+	if *target == "" {
+		fmt.Println("Error: target is required")
+		flag.Usage()
+		return
+	}
+
+	if *StartPort > *EndPort {
+		fmt.Println("Error : starting port must be less than ending port")
+		flag.Usage()
+		return
+	}
+
+	for i := *StartPort; i <= *EndPort; i++ {
 		wg.Add(1)
 		go func(a int) {
 			defer wg.Done()
-			_, err := net.Dial("tcp",fmt.Sprintf("scanme.nmap.org:%d",a))
+			_, err := net.Dial("tcp",fmt.Sprintf("%s:%d",*target,a))
 			if err == nil {
 				fmt.Println("Port Opened : ",a)
 			}
