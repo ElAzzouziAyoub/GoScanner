@@ -15,6 +15,7 @@ func main() {
 	target := flag.String("target", "", "Target host")
 	StartPort := flag.Int("sp", 80, "Starting Port to scan")
 	EndPort := flag.Int("ep", 80, "Ending Port to scan")
+	Type := flag.String("type","tcp","TCP/UDP")
 
 	flag.Parse()
 
@@ -23,6 +24,11 @@ func main() {
 		flag.Usage()
 		return
 	}
+	if *StartPort < 1 || *EndPort > 65535 {
+		fmt.Println("Error : invalid port range")
+		flag.Usage()
+		return
+	} 
 
 	if *StartPort > *EndPort {
 		fmt.Println("Error : starting port must be less than ending port")
@@ -34,7 +40,7 @@ func main() {
 		wg.Add(1)
 		go func(a int) {
 			defer wg.Done()
-			_, err := net.Dial("tcp",fmt.Sprintf("%s:%d",*target,a))
+			_, err := net.Dial(*Type,fmt.Sprintf("%s:%d",*target,a))
 			if err == nil {
 				fmt.Println("Port Opened : ",a)
 			}
