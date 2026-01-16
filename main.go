@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"sync"
-	"flag"
-	"os"
-	"log"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
@@ -19,7 +20,6 @@ type PortService struct {
     Description string `json:"description"`
     IsOfficial  bool   `json:"is_official"`
 }
-
 
 
 func main() {
@@ -72,6 +72,8 @@ func main() {
 	for i := *StartPort; i <= *EndPort; i++ {
 		wg.Add(1)
 		go func(a int) {
+
+			start := time.Now()
 			defer wg.Done()
 			_, err := net.Dial(*Type,fmt.Sprintf("%s:%d",*target,a))
 			port := serviceMap[a]
@@ -83,6 +85,8 @@ func main() {
 				}else{
 					fmt.Println("Type : UDP")
 				}
+				duration := time.Since(start)
+				fmt.Println("Duration :",duration.Milliseconds()," ms")
 				fmt.Println("IsOfficial :",port.IsOfficial)
 				fmt.Println("\n")
 			}
