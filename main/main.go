@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"goscan/Ascii"
 )
 
 var wg sync.WaitGroup
@@ -23,6 +24,8 @@ type PortService struct {
 
 
 func main() {
+
+	ascii_art.PrintAsciiArt()
 
 	data, err := os.ReadFile("ports.json")
 	if err != nil {
@@ -69,16 +72,35 @@ func main() {
 		return
 	}
 
+	fmt.Println("--------------------------------")
+
 	for i := *StartPort; i <= *EndPort; i++ {
 		wg.Add(1)
 		go func(a int) {
 
 			start := time.Now()
 			defer wg.Done()
-			_, err := net.Dial(*Type,fmt.Sprintf("%s:%d",*target,a))
+			conn, err := net.DialTimeout(*Type,fmt.Sprintf("%s:%d",*target,a),2*time.Second)
 			port := serviceMap[a]
+
+			state := "unknown"
+
 			if err == nil {
-				fmt.Println("Port Opened : ",a)
+    		state = "open"
+    		conn.Close()
+			} else {
+    	if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
+        	state = "filtered"
+    		}else {
+        	state = "closed"
+    		}
+			}
+
+
+
+			if err == nil {
+				fmt.Println("Port : ",a)
+				fmt.Println("State : ",state)
 				fmt.Println("Description :",port.Description)
 				if port.IsTCP {
 					fmt.Println("Type : TCP")
@@ -86,9 +108,9 @@ func main() {
 					fmt.Println("Type : UDP")
 				}
 				duration := time.Since(start)
-				fmt.Println("Duration :",duration.Milliseconds()," ms")
+				fmt.Println("Duration :",duration.Milliseconds(),"ms")
 				fmt.Println("IsOfficial :",port.IsOfficial)
-				fmt.Println("\n")
+				fmt.Println("--------------------------------")
 			}
 
 		}(i)
